@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+Future<void> launchWebUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    debugPrint('Could not launch $url');
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProjetoFenixApp());
@@ -80,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.open_in_browser, color: Color(0xFF44403C)),
             tooltip: 'Abrir no Cloudflare',
-            onPressed: () => _launchUrl('https://projeto-fenix.jeffef.workers.dev'),
+            onPressed: () => launchWebUrl('https://projeto-fenix.jeffef.workers.dev'),
           ),
         ],
       ),
@@ -114,13 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-
-  static Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      debugPrint('Could not launch $url');
-    }
   }
 }
 
@@ -253,7 +253,7 @@ class _ComparatorScreenState extends State<ComparatorScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => HomeScreen._launchUrl('https://www.clickbus.com.br/onibus/curitiba-pr/florianopolis-todos-sc'),
+                  onPressed: () => launchWebUrl('https://www.clickbus.com.br/onibus/curitiba-pr/florianopolis-todos-sc'),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -263,7 +263,7 @@ class _ComparatorScreenState extends State<ComparatorScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => HomeScreen._launchUrl('https://www.airbnb.com.br/s/Lagoa-da-Concei%C3%A7%C3%A3o--Florian%C3%B3polis---SC/homes?room_types%5B%5D=Entire%20home%2Fapt'),
+                  onPressed: () => launchWebUrl('https://www.airbnb.com.br/s/Lagoa-da-Concei%C3%A7%C3%A3o--Florian%C3%B3polis---SC/homes?room_types%5B%5D=Entire%20home%2Fapt'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1C1917),
                     foregroundColor: Colors.white,
@@ -323,7 +323,7 @@ class _ComparatorScreenState extends State<ComparatorScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => HomeScreen._launchUrl('https://www.clickbus.com.br/onibus/sao-paulo-sp/rio-de-janeiro-todos-rj'),
+                  onPressed: () => launchWebUrl('https://www.clickbus.com.br/onibus/sao-paulo-sp/rio-de-janeiro-todos-rj'),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -333,7 +333,7 @@ class _ComparatorScreenState extends State<ComparatorScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => HomeScreen._launchUrl('https://www.airbnb.com.br/s/Botafogo--Rio-de-Janeiro---RJ/homes?room_types%5B%5D=Entire%20home%2Fapt'),
+                  onPressed: () => launchWebUrl('https://www.airbnb.com.br/s/Botafogo--Rio-de-Janeiro---RJ/homes?room_types%5B%5D=Entire%20home%2Fapt'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1C1917),
                     foregroundColor: Colors.white,
@@ -592,7 +592,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final doneCount = _items.filterDone();
+    final doneCount = _items.where((e) => e['done'] == true).length;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -629,8 +629,4 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
       ],
     );
   }
-}
-
-extension _FilterExtension on List<Map<String, dynamic>> {
-  int filterDone() => where((e) => e['done'] == true).length;
 }
