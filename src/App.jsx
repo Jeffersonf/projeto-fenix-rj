@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
+import { BookingPriorityHub } from './components/BookingPriorityHub';
 import { ItineraryTimeline } from './components/ItineraryTimeline';
 import { BudgetTracker } from './components/BudgetTracker';
 import { SurvivalChecklist } from './components/SurvivalChecklist';
@@ -12,8 +13,26 @@ import {
   INITIAL_RESOURCES 
 } from './data/initialData';
 
+const DEFAULT_TRIP_CONFIG = {
+  days: 7,
+  hostelDailyRate: 80,
+  busBooked: false,
+  hostelBooked: false,
+  startDate: '2026-09-22',
+  isDateFlexible: true
+};
+
 export function App() {
   // Load state from localStorage or fallback to defaults
+  const [tripConfig, setTripConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('fenix_trip_config_v1');
+      return saved ? { ...DEFAULT_TRIP_CONFIG, ...JSON.parse(saved) } : DEFAULT_TRIP_CONFIG;
+    } catch {
+      return DEFAULT_TRIP_CONFIG;
+    }
+  });
+
   const [itinerary, setItinerary] = useState(() => {
     try {
       const saved = localStorage.getItem('fenix_itinerary_v1');
@@ -50,9 +69,16 @@ export function App() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState('itinerary');
+  // Default to 'booking' if neither bus nor hostel is booked, giving user immediate focus
+  const [activeTab, setActiveTab] = useState(() => {
+    return (!tripConfig.busBooked || !tripConfig.hostelBooked) ? 'booking' : 'itinerary';
+  });
 
   // Sync to localStorage
+  useEffect(() => {
+    localStorage.setItem('fenix_trip_config_v1', JSON.stringify(tripConfig));
+  }, [tripConfig]);
+
   useEffect(() => {
     localStorage.setItem('fenix_itinerary_v1', JSON.stringify(itinerary));
   }, [itinerary]);
@@ -71,11 +97,13 @@ export function App() {
 
   const handleResetData = () => {
     if (window.confirm('Deseja restaurar todos os dados originais do Projeto Fênix? Todas as alterações manuais serão resetadas.')) {
+      setTripConfig(DEFAULT_TRIP_CONFIG);
       setItinerary(INITIAL_ITINERARY);
       setBudget(INITIAL_BUDGET);
       setChecklist(INITIAL_CHECKLIST);
       setResources(INITIAL_RESOURCES);
       localStorage.clear();
+      setActiveTab('booking');
     }
   };
 
@@ -96,7 +124,9 @@ export function App() {
         itinerary={itinerary} 
         checklist={checklist} 
         budget={budget} 
+        tripConfig={tripConfig}
         onResetData={handleResetData}
+        setActiveTab={setActiveTab}
       />
 
       {/* Main Container */}
@@ -105,6 +135,7 @@ export function App() {
         <Navigation
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          tripConfig={tripConfig}
           counts={{
             totalActivities,
             completedActivities,
@@ -117,10 +148,21 @@ export function App() {
 
         {/* Tab Contents */}
         <div className="mt-4">
+          {activeTab === 'booking' && (
+            <BookingPriorityHub
+              tripConfig={tripConfig}
+              setTripConfig={setTripConfig}
+              budget={budget}
+              setBudget={setBudget}
+            />
+          )}
+
           {activeTab === 'itinerary' && (
             <ItineraryTimeline 
               itinerary={itinerary} 
               setItinerary={setItinerary} 
+              tripConfig={tripConfig}
+              setTripConfig={setTripConfig}
             />
           )}
 
@@ -151,7 +193,7 @@ export function App() {
       <footer className="border-t border-slate-800/80 bg-[#070b12] py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="text-slate-400 font-medium">
-            🦅 Projeto Fênix: O Resgate da Soberania no RJ • 22 a 28 de Setembro de 2026
+            🦅 Projeto Fênix: O Resgate da Soberania no RJ • {tripConfig.days || 7} Dias em Planejamento
           </p>
           <p>
             Desenvolvido para máxima agilidade e foco durante a viagem. Persistência local ativada.

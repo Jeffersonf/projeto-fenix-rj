@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { 
   CheckCircle2, Circle, MapPin, AlertTriangle, Sparkles, 
-  ChevronDown, ChevronUp, Sun, Moon, Sunrise, Clock, Flame, Check
+  ChevronDown, ChevronUp, Sun, Moon, Sunrise, Clock, Flame, Check,
+  Sliders, Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export function ItineraryTimeline({ itinerary, setItinerary }) {
+export function ItineraryTimeline({ itinerary, setItinerary, tripConfig, setTripConfig }) {
   const [selectedDayFilter, setSelectedDayFilter] = useState('all');
+  const [onlyPlannedDays, setOnlyPlannedDays] = useState(false);
   const [expandedDays, setExpandedDays] = useState({
     'day-1': true,
     'day-2': true,
@@ -16,6 +18,8 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
     'day-6': true,
     'day-7': true,
   });
+
+  const activeDaysLimit = tripConfig?.days || 7;
 
   const toggleDayExpansion = (dayId) => {
     setExpandedDays(prev => ({ ...prev, [dayId]: !prev[dayId] }));
@@ -75,9 +79,11 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
     });
   };
 
-  const filteredItinerary = selectedDayFilter === 'all'
-    ? itinerary
-    : itinerary.filter(day => day.dayNumber === Number(selectedDayFilter));
+  const filteredItinerary = itinerary.filter(day => {
+    if (onlyPlannedDays && day.dayNumber > activeDaysLimit) return false;
+    if (selectedDayFilter === 'all') return true;
+    return day.dayNumber === Number(selectedDayFilter);
+  });
 
   const getPeriodIcon = (period) => {
     const p = period.toLowerCase();
@@ -104,48 +110,65 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
       {/* Top Controls & Day Quick-selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 backdrop-blur-md p-4 rounded-2xl border border-slate-800">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>Roteiro Dia a Dia</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono">
-              7 Dias
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-white">Roteiro Carioca</h2>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono font-semibold">
+              Plano de {activeDaysLimit} Dias
             </span>
-          </h2>
+          </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Marque cada atividade concluída conforme vive o momento no Rio.
+            Duração flexível: você pode testar quantos dias cabem no seu orçamento e agenda.
           </p>
         </div>
 
-        {/* Day filters */}
-        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        {/* Filters and View toggles */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setSelectedDayFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
-              selectedDayFilter === 'all'
-                ? 'bg-emerald-500 text-white font-semibold shadow'
-                : 'bg-slate-800/70 text-slate-400 hover:text-slate-200'
+            onClick={() => setOnlyPlannedDays(!onlyPlannedDays)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              onlyPlannedDays 
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
             }`}
           >
-            Todos
+            {onlyPlannedDays ? `Exibindo só ${activeDaysLimit} dias` : 'Exibir todos os 7 dias'}
           </button>
-          {itinerary.map(day => {
-            const isDone = day.activities.every(a => a.completed);
-            return (
-              <button
-                key={day.id}
-                onClick={() => setSelectedDayFilter(day.dayNumber.toString())}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1 ${
-                  selectedDayFilter === day.dayNumber.toString()
-                    ? 'bg-emerald-500 text-white font-semibold shadow'
-                    : isDone
-                    ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-400'
-                    : 'bg-slate-800/70 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <span>D{day.dayNumber}</span>
-                {isDone && <Check className="w-3 h-3 text-emerald-400" />}
-              </button>
-            );
-          })}
+
+          {/* Day selector pills */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              onClick={() => setSelectedDayFilter('all')}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                selectedDayFilter === 'all'
+                  ? 'bg-emerald-500 text-white font-semibold shadow'
+                  : 'bg-slate-800/70 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Todos
+            </button>
+            {itinerary.map(day => {
+              const isDone = day.activities.every(a => a.completed);
+              const isBeyond = day.dayNumber > activeDaysLimit;
+              return (
+                <button
+                  key={day.id}
+                  onClick={() => setSelectedDayFilter(day.dayNumber.toString())}
+                  className={`px-2 py-1.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1 ${
+                    selectedDayFilter === day.dayNumber.toString()
+                      ? 'bg-emerald-500 text-white font-semibold shadow'
+                      : isDone
+                      ? 'bg-emerald-950/60 border border-emerald-500/30 text-emerald-400'
+                      : isBeyond
+                      ? 'bg-slate-900 text-slate-500 opacity-60'
+                      : 'bg-slate-800/70 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <span>D{day.dayNumber}</span>
+                  {isDone && <Check className="w-3 h-3 text-emerald-400" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -156,12 +179,15 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
           const totalCount = day.activities.length;
           const isAllDone = completedCount === totalCount;
           const isExpanded = expandedDays[day.id] !== false;
+          const isBeyondPlan = day.dayNumber > activeDaysLimit;
 
           return (
             <div
               key={day.id}
               className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-                isAllDone
+                isBeyondPlan
+                  ? 'bg-slate-900/30 border-slate-800/60 opacity-80'
+                  : isAllDone
                   ? 'bg-gradient-to-b from-emerald-950/20 to-slate-900/60 border-emerald-500/40 shadow-lg shadow-emerald-950/20'
                   : 'bg-slate-900/60 border-slate-800 hover:border-slate-700/80 shadow-md'
               }`}
@@ -177,6 +203,8 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
                     className={`w-11 h-11 rounded-2xl flex flex-col items-center justify-center font-bold shrink-0 transition-transform ${
                       isAllDone
                         ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                        : isBeyondPlan
+                        ? 'bg-slate-800/60 text-slate-400 border border-slate-700/50'
                         : 'bg-gradient-to-br from-slate-800 to-slate-900 text-slate-200 border border-slate-700'
                     }`}
                   >
@@ -194,6 +222,11 @@ export function ItineraryTimeline({ itinerary, setItinerary }) {
                       <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${getBadgeClass(day.badgeColor)}`}>
                         {day.badge}
                       </span>
+                      {isBeyondPlan && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-amber-400/90 border border-amber-500/20 font-medium">
+                          Opcional / Dia Extra
+                        </span>
+                      )}
                     </div>
                     {day.quote && (
                       <p className="text-xs text-slate-400 italic">

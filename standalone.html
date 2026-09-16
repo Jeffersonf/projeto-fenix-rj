@@ -344,8 +344,22 @@
       { id: 'res-5', title: 'Guia Trilha da Pedra da Gávea', description: 'Guias certificados ICMBio para a Carrasqueira', url: 'https://trilhasnorio.com.br', category: 'Aventura', icon: '🧗' }
     ];
 
+    const DEFAULT_TRIP_CONFIG = {
+      days: 7,
+      hostelDailyRate: 80,
+      busBooked: false,
+      hostelBooked: false
+    };
+
     // --- MAIN APP ---
     function App() {
+      const [tripConfig, setTripConfig] = useState(() => {
+        try {
+          const s = localStorage.getItem('fenix_trip_config_v1');
+          return s ? { ...DEFAULT_TRIP_CONFIG, ...JSON.parse(s) } : DEFAULT_TRIP_CONFIG;
+        } catch { return DEFAULT_TRIP_CONFIG; }
+      });
+
       const [itinerary, setItinerary] = useState(() => {
         try {
           const s = localStorage.getItem('fenix_itinerary_v1');
@@ -374,24 +388,55 @@
         } catch { return INITIAL_RESOURCES; }
       });
 
-      const [activeTab, setActiveTab] = useState('itinerary');
+      const [activeTab, setActiveTab] = useState(() => {
+        return (!tripConfig.busBooked || !tripConfig.hostelBooked) ? 'booking' : 'itinerary';
+      });
+
       const [includeOptional, setIncludeOptional] = useState(true);
       const [newCheckItem, setNewCheckItem] = useState('');
-      const [newCheckCat, setNewCheckCat] = useState('Segurança & Sobrevivência');
-      const [filterCheckCat, setFilterCheckCat] = useState('all');
 
+      useEffect(() => { localStorage.setItem('fenix_trip_config_v1', JSON.stringify(tripConfig)); }, [tripConfig]);
       useEffect(() => { localStorage.setItem('fenix_itinerary_v1', JSON.stringify(itinerary)); }, [itinerary]);
       useEffect(() => { localStorage.setItem('fenix_budget_v1', JSON.stringify(budget)); }, [budget]);
       useEffect(() => { localStorage.setItem('fenix_checklist_v1', JSON.stringify(checklist)); }, [checklist]);
       useEffect(() => { localStorage.setItem('fenix_resources_v1', JSON.stringify(resources)); }, [resources]);
 
-      // Calculations
-      const targetDate = new Date('2026-09-22T08:00:00');
-      const diffDays = Math.max(0, Math.ceil((targetDate - new Date()) / (1000 * 60 * 60 * 24)));
+      // Change trip days
+      const handleDaysChange = (newDays) => {
+        const days = Math.min(10, Math.max(3, Number(newDays) || 7));
+        setTripConfig(prev => ({ ...prev, days }));
+        const nights = Math.max(1, days - 1);
+        const hostelTotal = (tripConfig.hostelDailyRate || 80) * nights;
+        const foodTotal = days * 130;
 
+        setBudget(prev => prev.map(item => {
+          if (item.id === 'b-hospedagem') {
+            return { ...item, estimated: hostelTotal, description: `${nights} Noites em Social Hostel (R$ ${tripConfig.hostelDailyRate || 80}/dia)` };
+          }
+          if (item.id === 'b-alimentacao') {
+            return { ...item, estimated: foodTotal, description: `Alimentação saudável para ${days} dias (~R$ 130/dia)` };
+          }
+          return item;
+        }));
+      };
+
+      const handleHostelRateChange = (newRate) => {
+        const rate = Number(newRate) || 80;
+        setTripConfig(prev => ({ ...prev, hostelDailyRate: rate }));
+        const nights = Math.max(1, tripConfig.days - 1);
+        const hostelTotal = rate * nights;
+
+        setBudget(prev => prev.map(item => {
+          if (item.id === 'b-hospedagem') {
+            return { ...item, estimated: hostelTotal, description: `${nights} Noites em Social Hostel (R$ ${rate}/dia)` };
+          }
+          return item;
+        }));
+      };
+
+      const nights = Math.max(1, (tripConfig.days || 7) - 1);
       const totalActivities = itinerary.reduce((a, d) => a + d.activities.length, 0);
       const completedActivities = itinerary.reduce((a, d) => a + d.activities.filter(x => x.completed).length, 0);
-
       const totalChecklist = checklist.length;
       const completedChecklist = checklist.filter(c => c.completed).length;
 
@@ -408,23 +453,9 @@
             activities: d.activities.map(a => {
               if (a.id !== actId) return a;
               const next = !a.completed;
-              if (next && window.confetti) {
-                confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
-              }
+              if (next && window.confetti) confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
               return { ...a, completed: next };
             })
-          };
-        }));
-      };
-
-      const completeAllDay = (dayId) => {
-        setItinerary(prev => prev.map(d => {
-          if (d.id !== dayId) return d;
-          const allDone = d.activities.every(a => a.completed);
-          if (!allDone && window.confetti) confetti({ particleCount: 90, spread: 80 });
-          return {
-            ...d,
-            activities: d.activities.map(a => ({ ...a, completed: !allDone }))
           };
         }));
       };
@@ -443,7 +474,7 @@
         if (!newCheckItem.trim()) return;
         setChecklist(prev => [...prev, {
           id: `custom-${Date.now()}`,
-          category: newCheckCat,
+          category: 'Segurança & Sobrevivência',
           title: newCheckItem.trim(),
           completed: false,
           isCustom: true
@@ -458,23 +489,35 @@
 
       const resetAll = () => {
         if (confirm('Restaurar os dados originais do Projeto Fênix?')) {
+          setTripConfig(DEFAULT_TRIP_CONFIG);
           setItinerary(INITIAL_ITINERARY);
           setBudget(INITIAL_BUDGET);
           setChecklist(INITIAL_CHECKLIST);
           setResources(INITIAL_RESOURCES);
           localStorage.clear();
+          setActiveTab('booking');
         }
       };
 
       return (
         <div className="min-h-screen flex flex-col">
-          {/* Top Header */}
+          {/* Header */}
           <header className="relative bg-gradient-to-b from-[#0f1d2e] to-[#0a0f18] border-b border-slate-800 pt-8 pb-8 px-4 sm:px-8">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase">
-                  🔥 22 a 28 de Setembro de 2026 • 7 Dias / 6 Noites
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase">
+                    🔥 Duração Flexível: {tripConfig.days} Dias / {nights} Noites (A Definir)
+                  </span>
+                  {(!tripConfig.busBooked || !tripConfig.hostelBooked) && (
+                    <button
+                      onClick={() => setActiveTab('booking')}
+                      className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold animate-pulse"
+                    >
+                      ⚠️ Pendente: Passagens & Hospedagem
+                    </button>
+                  )}
+                </div>
                 <div className="flex items-center gap-3 text-xs text-slate-400">
                   <span>📍 Itapeva, SP ➡️ Rio de Janeiro, RJ</span>
                   <button onClick={resetAll} className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-xs">
@@ -495,15 +538,20 @@
 
               {/* Stats Bar */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Contagem Regressiva</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">{diffDays} dias</div>
-                  <span className="text-[11px] text-amber-400">Embarque: 22/09/2026</span>
+                <div 
+                  onClick={() => setActiveTab('booking')}
+                  className="bg-slate-900/80 border border-amber-500/40 rounded-xl p-3.5 cursor-pointer hover:border-amber-400 transition-all"
+                >
+                  <span className="text-xs text-amber-300 font-semibold">Prioridade #1</span>
+                  <div className="text-sm font-bold text-white mt-1">
+                    Ônibus: {tripConfig.busBooked ? '✓ Fechado' : '⏳ Pendente'}
+                  </div>
+                  <span className="text-[11px] text-amber-400 font-medium">Hostel: {tripConfig.hostelBooked ? '✓ Fechado' : '⏳ Pendente'}</span>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Roteiro Concluído</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">{completedActivities} / {totalActivities}</div>
-                  <span className="text-[11px] text-emerald-400">{Math.round((completedActivities/totalActivities)*100)||0}% realizado</span>
+                  <span className="text-xs text-slate-400">Duração Planejada</span>
+                  <div className="text-2xl font-extrabold text-white mt-1">{tripConfig.days} dias</div>
+                  <span className="text-[11px] text-emerald-400">{nights} noites de hostel</span>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
                   <span className="text-xs text-slate-400">Checklist Bagagem</span>
@@ -511,9 +559,9 @@
                   <span className="text-[11px] text-sky-400">{Math.round((completedChecklist/totalChecklist)*100)||0}% pronto</span>
                 </div>
                 <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Orçamento Gasto</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">R$ {totalActual}</div>
-                  <span className="text-[11px] text-slate-400">Teto: R$ {totalEstimated}</span>
+                  <span className="text-xs text-slate-400">Orçamento Previsto</span>
+                  <div className="text-2xl font-extrabold text-white mt-1">R$ {totalEstimated}</div>
+                  <span className="text-[11px] text-slate-400">Gasto: R$ {totalActual}</span>
                 </div>
               </div>
             </div>
@@ -521,14 +569,22 @@
 
           {/* Navigation Bar */}
           <div className="max-w-7xl mx-auto px-4 w-full pt-6">
-            <div className="flex gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl max-w-xl mx-auto overflow-x-auto">
+            <div className="flex gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('booking')}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                  activeTab === 'booking' ? 'bg-amber-600 text-white shadow' : 'text-amber-400 hover:text-white'
+                }`}
+              >
+                🏨 Passagens & Hostel
+              </button>
               <button
                 onClick={() => setActiveTab('itinerary')}
                 className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                   activeTab === 'itinerary' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                🗓️ Roteiro (7 Dias)
+                🗓️ Roteiro ({tripConfig.days}D)
               </button>
               <button
                 onClick={() => setActiveTab('budget')}
@@ -552,26 +608,209 @@
                   activeTab === 'resources' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                🔗 Links & Reservas
+                🔗 Links
               </button>
             </div>
           </div>
 
-          {/* Tab Content */}
+          {/* Main Tab View */}
           <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex-1 w-full space-y-6">
+            {/* 0. BOOKING HUB */}
+            {activeTab === 'booking' && (
+              <div className="space-y-6">
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-sky-500/10 border border-amber-500/40 space-y-3">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs uppercase">
+                    Prioridade #1 da Viagem
+                  </span>
+                  <h2 className="text-2xl font-bold text-white">
+                    Definir Duração, Passagens & Hospedagem
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300">
+                    Use o simulador abaixo para ajustar quantos dias você pretende ficar. O orçamento de hostel, alimentação e transporte será recalculado instantaneamente.
+                  </p>
+                </div>
+
+                {/* Simulator */}
+                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <h3 className="font-bold text-white text-base">🎛️ Simulador de Dias & Diárias</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold">
+                        <span>Duração:</span>
+                        <span className="text-emerald-400 font-bold">{tripConfig.days} Dias ({nights} Noites)</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="3"
+                        max="10"
+                        value={tripConfig.days}
+                        onChange={(e) => handleDaysChange(e.target.value)}
+                        className="w-full accent-emerald-500 cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500">
+                        <span>3 dias</span>
+                        <span>5 dias</span>
+                        <span>7 dias</span>
+                        <span>10 dias</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                      <div className="flex justify-between text-xs text-slate-300 font-semibold">
+                        <span>Diária Estimada:</span>
+                        <span className="text-amber-400 font-bold">R$ {tripConfig.hostelDailyRate}/dia</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="50"
+                        max="250"
+                        value={tripConfig.hostelDailyRate}
+                        onChange={(e) => handleHostelRateChange(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-sm text-white focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500">Média atual: R$ 75 a R$ 110</span>
+                    </div>
+
+                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+                      <span className="text-xs text-slate-300 font-semibold">Custo Previsto do Hostel:</span>
+                      <div>
+                        <div className="text-2xl font-extrabold text-white">
+                          R$ {tripConfig.hostelDailyRate * nights}
+                        </div>
+                        <span className="text-xs text-emerald-400">{nights} noites × R$ {tripConfig.hostelDailyRate}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bus Links */}
+                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">🚌 1. Passagens de Ônibus (SP ➡️ Novo Rio)</h3>
+                      <p className="text-xs text-slate-400">Dica: pegue ônibus noturno leito para economizar 1 diária de hostel!</p>
+                    </div>
+                    <button
+                      onClick={() => setTripConfig(p => ({ ...p, busBooked: !p.busBooked }))}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
+                        tripConfig.busBooked ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}
+                    >
+                      {tripConfig.busBooked ? '✓ Passagem Comprada' : 'Marcar como Comprada'}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <a href="https://www.clickbus.com.br/onibus/sao-paulo-sp/rio-de-janeiro-todos-rj" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
+                      <span className="text-xs font-bold text-sky-400">ClickBus ↗</span>
+                      <h4 className="font-bold text-white text-sm mt-1">Comparador Geral</h4>
+                      <p className="text-xs text-slate-400">Cometa, 1001, Águia Branca</p>
+                    </a>
+                    <a href="https://www.buser.com.br/onibus/sao-paulo-sp/rio-de-janeiro-rj" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
+                      <span className="text-xs font-bold text-emerald-400">Buser ↗</span>
+                      <h4 className="font-bold text-white text-sm mt-1">App de Ônibus</h4>
+                      <p className="text-xs text-slate-400">Até 40% mais barato</p>
+                    </a>
+                    <a href="https://www.autoviacao1001.com.br" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
+                      <span className="text-xs font-bold text-amber-400">Viação 1001 ↗</span>
+                      <h4 className="font-bold text-white text-sm mt-1">Linha Tradicional</h4>
+                      <p className="text-xs text-slate-400">Partidas a cada 30 min</p>
+                    </a>
+                    <a href="https://www.viacaocometa.com.br" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
+                      <span className="text-xs font-bold text-purple-400">Cometa ↗</span>
+                      <h4 className="font-bold text-white text-sm mt-1">Leito & Semi-leito</h4>
+                      <p className="text-xs text-slate-400">Conforto garantido</p>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Hostels Guide */}
+                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">🏨 2. Hospedagem: Ipanema vs. Botafogo</h3>
+                      <p className="text-xs text-slate-400">Ipanema: pé na areia e pôr do sol • Botafogo: metrô e polo gastronômico</p>
+                    </div>
+                    <button
+                      onClick={() => setTripConfig(p => ({ ...p, hostelBooked: !p.hostelBooked }))}
+                      className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
+                        tripConfig.hostelBooked ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
+                      }`}
+                    >
+                      {tripConfig.hostelBooked ? '✓ Hostel Reservado' : 'Marcar como Reservado'}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex flex-col justify-between gap-3">
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-bold">IPANEMA</span>
+                          <span className="text-xs font-bold text-amber-400">~R$ 95/dia</span>
+                        </div>
+                        <h4 className="font-bold text-white text-base mt-1">Ipanema Beach Hostel</h4>
+                        <p className="text-xs text-slate-400">A 1 quadra da praia, próximo ao Arpoador, muito social.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a href="https://www.booking.com/searchresults.pt-br.html?ss=Ipanema+Beach+Hostel+Rio+de+Janeiro" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-emerald-600/30 text-emerald-300 rounded text-xs">
+                          Booking ↗
+                        </a>
+                        <a href="https://www.hostelworld.com" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-orange-600/30 text-orange-300 rounded text-xs">
+                          Hostelworld ↗
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex flex-col justify-between gap-3">
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded font-bold">BOTAFOGO</span>
+                          <span className="text-xs font-bold text-amber-400">~R$ 85/dia</span>
+                        </div>
+                        <h4 className="font-bold text-white text-base mt-1">Villa 25 Hostel & Suites</h4>
+                        <p className="text-xs text-slate-400">Perto do metrô, bairro seguro, polo BotaSoho com PFs baratos.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <a href="https://www.booking.com/searchresults.pt-br.html?ss=Villa+25+Hostel+Rio+de+Janeiro" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-emerald-600/30 text-emerald-300 rounded text-xs">
+                          Booking ↗
+                        </a>
+                        <a href="https://www.hostelworld.com" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-orange-600/30 text-orange-300 rounded text-xs">
+                          Hostelworld ↗
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 1. ITINERARY */}
             {activeTab === 'itinerary' && (
               <div className="space-y-6">
+                <div className="flex justify-between items-center bg-slate-900/70 p-4 rounded-xl border border-slate-800">
+                  <span className="text-sm font-bold text-white">Roteiro Ajustável ({tripConfig.days} Dias Ativos)</span>
+                  <button
+                    onClick={() => setActiveTab('booking')}
+                    className="text-xs text-emerald-400 hover:underline font-semibold"
+                  >
+                    Alterar número de dias no simulador ↗
+                  </button>
+                </div>
                 {itinerary.map((day) => {
                   const done = day.activities.filter(a => a.completed).length;
                   const total = day.activities.length;
                   const isAll = done === total;
+                  const isBeyond = day.dayNumber > tripConfig.days;
 
                   return (
                     <div
                       key={day.id}
                       className={`rounded-2xl border transition-all ${
-                        isAll ? 'bg-emerald-950/20 border-emerald-500/40' : 'bg-slate-900/70 border-slate-800'
+                        isBeyond
+                          ? 'bg-slate-900/30 border-slate-800/50 opacity-60'
+                          : isAll
+                          ? 'bg-emerald-950/20 border-emerald-500/40'
+                          : 'bg-slate-900/70 border-slate-800'
                       }`}
                     >
                       <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60">
@@ -583,24 +822,21 @@
                             <span className="text-base leading-none font-extrabold">{day.dayNumber}</span>
                           </div>
                           <div>
-                            <h2 className="text-base sm:text-lg font-bold text-white">
-                              {day.dayOfWeek} ({day.date}) • <span className="text-emerald-400">{day.title}</span>
-                            </h2>
+                            <div className="flex items-center gap-2">
+                              <h2 className="text-base sm:text-lg font-bold text-white">
+                                {day.dayOfWeek} ({day.date}) • <span className="text-emerald-400">{day.title}</span>
+                              </h2>
+                              {isBeyond && (
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-amber-500/20">
+                                  Dia Extra
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-slate-400 italic">"{day.quote}"</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-slate-400">{done}/{total} feitos</span>
-                          <button
-                            onClick={() => completeAllDay(day.id)}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium border ${
-                              isAll ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
-                            }`}
-                          >
-                            {isAll ? 'Desmarcar Dia' : 'Concluir Dia'}
-                          </button>
-                        </div>
+                        <span className="text-xs font-mono text-slate-400">{done}/{total} feitos</span>
                       </div>
 
                       <div className="p-4 sm:p-5 space-y-3">
@@ -623,23 +859,14 @@
                               className="mt-1 w-4 h-4 text-emerald-500 rounded bg-slate-950 border-slate-700 focus:ring-0 cursor-pointer"
                             />
                             <div className="flex-1 space-y-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
-                                  {act.period}
-                                </span>
-                                <span className="text-xs text-sky-400">📍 {act.location}</span>
+                              <div className="flex justify-between text-xs">
+                                <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded uppercase">{act.period}</span>
+                                <span className="text-sky-400">📍 {act.location}</span>
                               </div>
                               <h3 className={`text-sm sm:text-base font-semibold ${act.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
                                 {act.title}
                               </h3>
-                              <p className={`text-xs ${act.completed ? 'text-slate-500' : 'text-slate-300'}`}>
-                                {act.description}
-                              </p>
-                              {act.warning && (
-                                <div className="p-2 rounded bg-amber-950/40 border border-amber-500/40 text-amber-300 text-xs mt-1">
-                                  {act.warning}
-                                </div>
-                              )}
+                              <p className={`text-xs ${act.completed ? 'text-slate-500' : 'text-slate-300'}`}>{act.description}</p>
                             </div>
                           </div>
                         ))}
@@ -656,20 +883,20 @@
                 <div className="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h2 className="text-xl font-bold text-white">💰 Orçamento & Gastos</h2>
-                      <p className="text-xs text-slate-400 mt-0.5">Acompanhamento e controle dos gastos reais da viagem.</p>
+                      <h2 className="text-xl font-bold text-white">💰 Orçamento ({tripConfig.days} Dias)</h2>
+                      <p className="text-xs text-slate-400 mt-0.5">Hospedagem ({nights} noites) e alimentação recalculadas para sua duração.</p>
                     </div>
                     <button
                       onClick={() => setIncludeOptional(!includeOptional)}
                       className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-300 hover:text-white"
                     >
-                      {includeOptional ? 'Alternar para Modo Essencial (Sem Asa Delta/Guia)' : 'Alternar para Modo Completo (com Voo/Guia)'}
+                      {includeOptional ? 'Modo Essencial (Sem Asa Delta/Guia)' : 'Modo Completo (com Voo/Guia)'}
                     </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
-                      <span className="text-xs text-slate-400">Orçamento Previsto</span>
+                      <span className="text-xs text-slate-400">Total Previsto</span>
                       <div className="text-2xl font-bold text-white mt-1">R$ {totalEstimated}</div>
                     </div>
                     <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
@@ -822,17 +1049,12 @@
                     </div>
                   ))}
                 </div>
-
-                <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 text-xs space-y-2 text-slate-300">
-                  <span className="font-bold text-amber-400">🛡️ Lembrete de Segurança no RJ:</span>
-                  <p>Mantenha sempre cartões e celular guardados na doleira por dentro da bermuda em pontos movimentados como a Rodoviária Novo Rio, Pedra do Sal e Lapa.</p>
-                </div>
               </div>
             )}
           </main>
 
           <footer className="border-t border-slate-800 bg-[#070b12] py-4 text-center text-xs text-slate-500">
-            🦅 Projeto Fênix • Setembro de 2026 • Itapeva ➡️ Rio de Janeiro
+            🦅 Projeto Fênix • Duração Flexível • Itapeva ➡️ Rio de Janeiro
           </footer>
         </div>
       );
