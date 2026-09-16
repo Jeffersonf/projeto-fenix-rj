@@ -1,0 +1,64 @@
+name: Build Android APK (Flutter)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.1'
+          channel: stable
+          cache: true
+
+      - name: Create Android wrapper files
+        working-directory: mobile
+        run: flutter create --platforms=android --org com.jeffersonf --project-name projeto_fenix --no-pub .
+
+      - name: Set Android app label & permissions
+        working-directory: mobile
+        run: |
+          sed -i 's/android:label="projeto_fenix"/android:label="Refugio Viagem"/' android/app/src/main/AndroidManifest.xml
+          sed -i '/<application/i\    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: mobile
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Refugio-Viagem-APK
+          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v1.0.0"
+          gh release create "$TAG" mobile/build/app/outputs/flutter-apk/app-release.apk \
+            --title "Refugio & Viagem $TAG" \
+            --notes "Versao Android APK (Flutter) do Caderno de Viagem: Florianopolis vs Rio de Janeiro." \
+            --latest || \
+          gh release upload "$TAG" mobile/build/app/outputs/flutter-apk/app-release.apk --clobber
