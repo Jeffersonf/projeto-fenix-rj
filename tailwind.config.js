@@ -7,19 +7,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        rio: {
-          forest: '#059669',
-          forestDark: '#064e3b',
-          forestLight: '#10b981',
-          ocean: '#0284c7',
-          oceanDark: '#0c4a6e',
-          oceanLight: '#38bdf8',
-          sunset: '#f97316',
-          sunsetDark: '#c2410c',
-          gold: '#eab308',
-          darkBg: '#0a0f18',
-          cardBg: '#131e2e',
-          cardBorder: '#1f2f45',
+        warm: {
+          bg: '#faf8f5',
+          card: '#ffffff',
+          sand: '#f4efe6',
+          border: '#e7e2d7',
+          stone: '#78716c',
+          text: '#292524',
+          terracotta: '#b45309',
+          sage: '#4d7c0f',
+          ocean: '#0369a1',
         }
       },
       fontFamily: {

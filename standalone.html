@@ -3,1058 +3,347 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Projeto Fênix | O Resgate da Soberania no RJ</title>
+  <title>Refúgio & Recomeço | Caderno de Viagem</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            rio: {
-              forest: '#059669',
-              ocean: '#0284c7',
-              sunset: '#f97316',
-              gold: '#eab308',
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0f18; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    body { font-family: 'Inter', system-ui, sans-serif; background-color: #faf8f5; color: #292524; }
+    h1, h2, h3, .font-serif { font-family: 'Newsreader', Georgia, serif; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #f5f2eb; }
+    ::-webkit-scrollbar-thumb { background: #d6d0c4; border-radius: 9999px; }
   </style>
 </head>
-<body class="bg-[#0a0f18] text-slate-100 antialiased min-h-screen">
+<body class="bg-[#faf8f5] text-stone-800 antialiased min-h-screen">
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    // --- DATA ---
-    const INITIAL_ITINERARY = [
-      {
-        id: 'day-1',
-        dayNumber: 1,
-        dayOfWeek: 'Terça-feira',
-        date: '22/09/2026',
-        title: 'Chegada & Reconhecimento',
-        badge: 'Mata & Mar',
-        badgeColor: 'forest',
-        quote: 'O primeiro passo da retomada. Sentir o cheiro do mar carioca.',
-        activities: [
-          {
-            id: 'd1-a1',
-            period: 'Manhã / Tarde',
-            title: 'Desembarque na Rodoviária Novo Rio & Check-in',
-            description: 'Chegada via ônibus, deslocamento seguro (app/metrô) e check-in no Social Hostel (Ipanema ou Botafogo). Acomodar bagagens e reconhecer arredores.',
-            location: 'Rodoviária Novo Rio ➡️ Hostel',
-            completed: false
-          },
-          {
-            id: 'd1-a2',
-            period: 'Fim de Tarde',
-            title: 'Pôr do Sol Mágico na Pedra do Arpoador',
-            description: 'Caminhada clássica pela orla até a Pedra do Arpoador para aplaudir o sol se pondo no mar. Energia pura de boas-vindas.',
-            location: 'Pedra do Arpoador',
-            completed: false
-          },
-          {
-            id: 'd1-a3',
-            period: 'Noite',
-            title: 'Jantar Leve & Social no BotaSoho',
-            description: 'Jantar nutritivo no polo gastronômico de Botafogo ou no bar do hostel. Conexões autênticas sem necessidade de álcool.',
-            location: 'Botafogo / Hostel Lounge',
-            completed: false
-          }
-        ]
-      },
-      {
-        id: 'day-2',
-        dayNumber: 2,
-        dayOfWeek: 'Quarta-feira',
-        date: '23/09/2026',
-        title: 'O Grande Marco da Liberdade',
-        badge: 'Adrenalina Máxima',
-        badgeColor: 'sunset',
-        quote: 'Abrir as asas e contemplar a Cidade Maravilhosa de cima. Um novo horizonte.',
-        activities: [
-          {
-            id: 'd2-a1',
-            period: 'Manhã',
-            title: 'Voo Livre de Asa Delta (Pedra Bonita ➡️ São Conrado)',
-            description: 'Subida até a rampa de decolagem da Pedra Bonita em São Conrado. Salto duplo com instrutor experiente e pouso na praia de São Conrado. Experiência transformadora!',
-            location: 'Pedra Bonita / Praia de São Conrado',
-            completed: false,
-            highlight: true
-          },
-          {
-            id: 'd2-a2',
-            period: 'Tarde',
-            title: 'Pedalada Completa na Lagoa Rodrigo de Freitas',
-            description: 'Aluguel de Bike Itaú para contornar os 7,5 km da Lagoa. Parada para água de coco e contemplação do Cristo e dos Dois Irmãos.',
-            location: 'Lagoa Rodrigo de Freitas',
-            completed: false
-          },
-          {
-            id: 'd2-a3',
-            period: 'Noite',
-            title: 'Descanso & Rolê Tranquilo em Ipanema',
-            description: 'Caminhada despretensiosa pelas ruas arborizadas de Ipanema, suco natural da Polly Sucos e recuperação física.',
-            location: 'Ipanema',
-            completed: false
-          }
-        ]
-      },
-      {
-        id: 'day-3',
-        dayNumber: 3,
-        dayOfWeek: 'Quinta-feira',
-        date: '24/09/2026',
-        title: 'Raízes, Visual & Cultura Carioca',
-        badge: 'Cultura & Trilha',
-        badgeColor: 'forest',
-        quote: 'Respeito à história, ritmo ancestral e pé na terra.',
-        activities: [
-          {
-            id: 'd3-a1',
-            period: 'Manhã',
-            title: 'Trilha do Morro da Urca (Pista Claudio Coutinho)',
-            description: 'Caminhada ecológica agradável e gratuita margeando o mar pela Pista Claudio Coutinho, subindo degraus de mata preservada.',
-            location: 'Urca / Pista Claudio Coutinho',
-            completed: false
-          },
-          {
-            id: 'd3-a2',
-            period: 'Tarde',
-            title: 'Boulevard Olímpico, Museu do Amanhã & PF Tradicional',
-            description: 'Centro histórico renovado, murais do Kobra, Museu do Amanhã. Almoço: autêntico Prato Feito (PF) carioca com feijão preto.',
-            location: 'Praça Mauá / Boulevard Olímpico',
-            completed: false
-          },
-          {
-            id: 'd3-a3',
-            period: 'Noite',
-            title: 'Samba de Raiz na Pedra do Sal (Zero Álcool)',
-            description: 'Berço do samba carioca. Chegar cedo para pegar bom lugar na arquibancada de pedra. Curtir a batucada autêntica 100% lúcido.',
-            location: 'Pedra do Sal, Saúde',
-            completed: false,
-            highlight: true
-          }
-        ]
-      },
-      {
-        id: 'day-4',
-        dayNumber: 4,
-        dayOfWeek: 'Sexta-feira',
-        date: '25/09/2026',
-        title: 'Esporte & O Cartão Postal',
-        badge: 'Cardio & Praia',
-        badgeColor: 'ocean',
-        quote: 'Energia solar nas veias: acordar cedo e viver a orla como um local.',
-        activities: [
-          {
-            id: 'd4-a1',
-            period: 'Amanhecer',
-            title: 'Nascer do Sol no Mirante Dona Marta',
-            description: 'Subida de Uber antes do amanhecer para ver o sol despontar por trás do Pão de Açúcar e iluminar a Baía de Guanabara.',
-            location: 'Mirante Dona Marta, Santa Teresa',
-            completed: false,
-            highlight: true
-          },
-          {
-            id: 'd4-a2',
-            period: 'Manhã',
-            title: 'Corrida / Treino ou Natação no Posto 6 (Copacabana)',
-            description: 'Mar calmo no Posto 6, ideal para uma travessia a nado ou treino no calçadão icônico de Copacabana.',
-            location: 'Copacabana - Posto 6',
-            completed: false
-          },
-          {
-            id: 'd4-a3',
-            period: 'Tarde',
-            title: 'Relax & Social no Posto 9 (Ipanema)',
-            description: 'Vibe descontraída, areia dourada e esporte ao ar livre (altinha, futevôlei). Ponto de interação social natural.',
-            location: 'Praia de Ipanema - Posto 9',
-            completed: false
-          },
-          {
-            id: 'd4-a4',
-            period: 'Noite',
-            title: 'Arcos da Lapa & Boemia Tradicional',
-            description: 'Passeio histórico sob os Arcos da Lapa, contemplando a arquitetura colonial e a energia noturna carioca.',
-            location: 'Lapa',
-            completed: false
-          }
-        ]
-      },
-      {
-        id: 'day-5',
-        dayNumber: 5,
-        dayOfWeek: 'Sábado',
-        date: '26/09/2026',
-        title: 'A Foto Épica dos Dois Irmãos',
-        badge: 'Trilha Panorâmica',
-        badgeColor: 'forest',
-        quote: 'Superar o aclive, alcançar o cume e contemplar toda a Zona Sul sob seus pés.',
-        activities: [
-          {
-            id: 'd5-a1',
-            period: 'Manhã',
-            title: 'Trilha do Morro Dois Irmãos (Mototáxi Vidigal)',
-            description: 'Pegar mototáxi na Praça do Vidigal até o campo da Vila Olímpica. Subida de 45-60 min com vista deslumbrante de Leblon, Ipanema, Rocinha e Lagoa.',
-            location: 'Vidigal / Morro Dois Irmãos',
-            completed: false,
-            highlight: true
-          },
-          {
-            id: 'd5-a2',
-            period: 'Tarde',
-            title: 'Descida para o Leblon & Almoço Revigorante',
-            description: 'Descida tranquila até o Leblon, almoço saudável, açaí caprichado e descanso na praia do Leblon.',
-            location: 'Praia do Leblon',
-            completed: false
-          },
-          {
-            id: 'd5-a3',
-            period: 'Noite',
-            title: 'Noite Social no Hostel',
-            description: 'Integração com viajantes do mundo inteiro no hostel. Troca de vivências e preparação mental para o grande desafio.',
-            location: 'Hostel Lounge',
-            completed: false
-          }
-        ]
-      },
-      {
-        id: 'day-6',
-        dayNumber: 6,
-        dayOfWeek: 'Domingo',
-        date: '27/09/2026',
-        title: 'O Desafio Final: Pedra da Gávea',
-        badge: 'Desafio Supremo',
-        badgeColor: 'sunset',
-        quote: '842 metros de altitude. Foco total, guia contratado e a mística da Carrasqueira.',
-        activities: [
-          {
-            id: 'd6-a1',
-            period: 'Manhã',
-            title: 'Trilha da Pedra da Gávea com Guia Profissional',
-            description: 'O maior monólito à beira-mar do mundo. Exige preparo físico e equipamento de segurança para a Carrasqueira. Experiência lendária.',
-            location: 'Parque Nacional da Tijuca - Barra/São Conrado',
-            completed: false,
-            highlight: true,
-            warning: '⚠️ IMPORTANTE: Fazer estritamente com guia credenciado.'
-          },
-          {
-            id: 'd6-a2',
-            period: 'Tarde',
-            title: 'Almoço dos Campeões & Recuperação Muscular',
-            description: 'Almoço farto para reposição calórica. Banho relaxante e descanso merecido.',
-            location: 'Zona Sul',
-            completed: false
-          },
-          {
-            id: 'd6-a3',
-            period: 'Noite',
-            title: 'Despedida Leve pela Orla',
-            description: 'Última brisa noturna no calçadão, agradecendo pelas conquistas e pela mente renovada.',
-            location: 'Orla de Ipanema/Copacabana',
-            completed: false
-          }
-        ]
-      },
-      {
-        id: 'day-7',
-        dayNumber: 7,
-        dayOfWeek: 'Segunda-feira',
-        date: '28/09/2026',
-        title: 'Retorno Triunfal a Itapeva',
-        badge: 'Missão Cumprida',
-        badgeColor: 'ocean',
-        quote: 'A fênix renasceu. Voltando para casa mais forte, mais lúcido e soberano.',
-        activities: [
-          {
-            id: 'd7-a1',
-            period: 'Manhã',
-            title: 'Mergulho de Despedida no Mar Carioca',
-            description: 'Último mergulho revigorante nas águas salgadas do Rio, caminhada na areia e compra de lembranças.',
-            location: 'Praia de Ipanema / Copacabana',
-            completed: false
-          },
-          {
-            id: 'd7-a2',
-            period: 'Tarde',
-            title: 'Check-out do Hostel & Almoço',
-            description: 'Organizar mochila com todas as conquistas e itens de sobrevivência. Check-out até o meio-dia.',
-            location: 'Social Hostel',
-            completed: false
-          },
-          {
-            id: 'd7-a3',
-            period: 'Fim do Dia',
-            title: 'Embarque na Rodoviária Novo Rio ➡️ Retorno',
-            description: 'Deslocamento seguro para a rodoviária. Viagem de ônibus tranquila de volta para Itapeva/SP.',
-            location: 'Rodoviária Novo Rio ➡️ SP',
-            completed: false
-          }
-        ]
-      }
-    ];
-
-    const INITIAL_BUDGET = [
-      { id: 'b-passagens', category: 'Passagens (Ônibus)', description: 'Ônibus SP ➡️ RJ (Ida e Volta - Cometa / 1001)', estimated: 500, actual: 0, status: 'Pendente', icon: '🚌', isOptional: false },
-      { id: 'b-hospedagem', category: 'Hospedagem', description: '6 Noites em Social Hostel (Média R$ 80/dia - Ipanema/Botafogo)', estimated: 480, actual: 0, status: 'Pendente', icon: '🛏️', isOptional: false },
-      { id: 'b-alimentacao', category: 'Alimentação Saudável', description: 'PFs nutritivos, frutas, quiosques, sucos (~R$ 130/dia)', estimated: 910, actual: 0, status: 'Planejado', icon: '🍽️', isOptional: false },
-      { id: 'b-transporte', category: 'Transporte Local', description: 'Uber/99, Metrô Carioca, VLT e Mototáxi no Vidigal', estimated: 200, actual: 0, status: 'Planejado', icon: '🚇', isOptional: false },
-      { id: 'b-passeios', category: 'Passeios & Lazer', description: 'Aluguel Bike Itaú, ingressos, água de coco, museus', estimated: 350, actual: 0, status: 'Planejado', icon: '🚲', isOptional: false },
-      { id: 'b-asadelta', category: 'Asa Delta (Voo Livre)', description: 'Salto duplo com instrutor da Pedra Bonita + fotos/vídeo', estimated: 900, actual: 0, status: 'Pendente', icon: '🪂', isOptional: true },
-      { id: 'b-guia', category: 'Guia Pedra da Gávea', description: 'Guia credenciado com equipamento para Carrasqueira', estimated: 150, actual: 0, status: 'Pendente', icon: '🧗', isOptional: true }
-    ];
-
-    const INITIAL_CHECKLIST = [
-      { id: 'chk-1', category: 'Transporte & Hospedagem', title: 'Comprar passagens de ônibus (Viação Cometa / 1001)', completed: false },
-      { id: 'chk-2', category: 'Transporte & Hospedagem', title: 'Reservar hospedagem (Social Hostel em Ipanema ou Botafogo)', completed: false },
-      { id: 'chk-3', category: 'Segurança & Sobrevivência', title: 'Comprar Doleira antifurto (usar por baixo da bermuda)', completed: false },
-      { id: 'chk-4', category: 'Segurança & Sobrevivência', title: 'Comprar Capinha de celular à prova d\'água (com cordão reforçado)', completed: false },
-      { id: 'chk-5', category: 'Equipamento & Vestuário', title: 'Separar tênis de trilha com boa aderência (grip para pedras)', completed: false },
-      { id: 'chk-6', category: 'Equipamento & Vestuário', title: 'Roupas esportivas leves (dry-fit, sunga/bermuda, toalha rápida)', completed: false },
-      { id: 'chk-7', category: 'Logística & Digital', title: 'Baixar mapas offline do Rio de Janeiro no Google Maps', completed: false },
-      { id: 'chk-8', category: 'Logística & Digital', title: 'Fazer orçamento e separar reserva financeira no Pix e cartão seguro', completed: false },
-      { id: 'chk-9', category: 'Equipamento & Vestuário', title: 'Mochila de ataque leve (15-20L) com garrafa térmica e protetor', completed: false }
-    ];
-
-    const INITIAL_RESOURCES = [
-      { id: 'res-1', title: 'Passagem de Ônibus (Ida SP ➡️ RJ)', description: 'Viação Cometa / 1001 para Rodoviária Novo Rio', url: 'https://www.viacaocometa.com.br', category: 'Passagens', icon: '🎫' },
-      { id: 'res-2', title: 'Passagem de Ônibus (Volta RJ ➡️ SP)', description: 'Retorno seguro para Itapeva / São Paulo', url: 'https://www.autoviacao1001.com.br', category: 'Passagens', icon: '🎫' },
-      { id: 'res-3', title: 'Hospedagem (Social Hostel)', description: 'Foco em Ipanema ou Botafogo no Hostelworld / Booking', url: 'https://www.hostelworld.com', category: 'Hospedagem', icon: '🏨' },
-      { id: 'res-4', title: 'Agendamento Voo Livre (Pedra Bonita)', description: 'Instrutores certificados CSCVL (São Conrado)', url: 'https://www.cscvl.com.br', category: 'Aventura', icon: '🪂' },
-      { id: 'res-5', title: 'Guia Trilha da Pedra da Gávea', description: 'Guias certificados ICMBio para a Carrasqueira', url: 'https://trilhasnorio.com.br', category: 'Aventura', icon: '🧗' }
-    ];
-
-    const DEFAULT_TRIP_CONFIG = {
-      days: 7,
-      hostelDailyRate: 80,
-      busBooked: false,
-      hostelBooked: false
-    };
-
-    // --- MAIN APP ---
     function App() {
-      const [tripConfig, setTripConfig] = useState(() => {
+      const [activeTab, setActiveTab] = useState('compare');
+      const [destTab, setDestTab] = useState('floripa');
+      const [days, setDays] = useState(6);
+      const [roomRate, setRoomRate] = useState(180);
+      const [foodRate, setFoodRate] = useState(130);
+      const [busCost, setBusCost] = useState(480);
+      const [notes, setNotes] = useState(() => {
         try {
-          const s = localStorage.getItem('fenix_trip_config_v1');
-          return s ? { ...DEFAULT_TRIP_CONFIG, ...JSON.parse(s) } : DEFAULT_TRIP_CONFIG;
-        } catch { return DEFAULT_TRIP_CONFIG; }
+          return localStorage.getItem('fenix_notes') || `Minhas ideias para a viagem:
+
+- Quero quarto privativo (hotel ou Airbnb com ar-condicionado e silêncio).
+- Nada de rever o passado ou ir em lugares repetidos.
+- Quero praia para caminhar e respirar.
+- Trilhas com fotos de visual épico.
+- Um lugar seguro onde eu consiga curtir a noite e bares sozinho sem me sentir deslocado.
+- Preciso voltar para Itapeva no dia 28/09 para trabalhar no dia 29.`;
+        } catch { return ''; }
       });
 
-      const [itinerary, setItinerary] = useState(() => {
-        try {
-          const s = localStorage.getItem('fenix_itinerary_v1');
-          return s ? JSON.parse(s) : INITIAL_ITINERARY;
-        } catch { return INITIAL_ITINERARY; }
-      });
+      useEffect(() => {
+        try { localStorage.setItem('fenix_notes', notes); } catch(e){}
+      }, [notes]);
 
-      const [budget, setBudget] = useState(() => {
-        try {
-          const s = localStorage.getItem('fenix_budget_v1');
-          return s ? JSON.parse(s) : INITIAL_BUDGET;
-        } catch { return INITIAL_BUDGET; }
-      });
-
-      const [checklist, setChecklist] = useState(() => {
-        try {
-          const s = localStorage.getItem('fenix_checklist_v1');
-          return s ? JSON.parse(s) : INITIAL_CHECKLIST;
-        } catch { return INITIAL_CHECKLIST; }
-      });
-
-      const [resources, setResources] = useState(() => {
-        try {
-          const s = localStorage.getItem('fenix_resources_v1');
-          return s ? JSON.parse(s) : INITIAL_RESOURCES;
-        } catch { return INITIAL_RESOURCES; }
-      });
-
-      const [activeTab, setActiveTab] = useState(() => {
-        return (!tripConfig.busBooked || !tripConfig.hostelBooked) ? 'booking' : 'itinerary';
-      });
-
-      const [includeOptional, setIncludeOptional] = useState(true);
-      const [newCheckItem, setNewCheckItem] = useState('');
-
-      useEffect(() => { localStorage.setItem('fenix_trip_config_v1', JSON.stringify(tripConfig)); }, [tripConfig]);
-      useEffect(() => { localStorage.setItem('fenix_itinerary_v1', JSON.stringify(itinerary)); }, [itinerary]);
-      useEffect(() => { localStorage.setItem('fenix_budget_v1', JSON.stringify(budget)); }, [budget]);
-      useEffect(() => { localStorage.setItem('fenix_checklist_v1', JSON.stringify(checklist)); }, [checklist]);
-      useEffect(() => { localStorage.setItem('fenix_resources_v1', JSON.stringify(resources)); }, [resources]);
-
-      // Change trip days
-      const handleDaysChange = (newDays) => {
-        const days = Math.min(10, Math.max(3, Number(newDays) || 7));
-        setTripConfig(prev => ({ ...prev, days }));
-        const nights = Math.max(1, days - 1);
-        const hostelTotal = (tripConfig.hostelDailyRate || 80) * nights;
-        const foodTotal = days * 130;
-
-        setBudget(prev => prev.map(item => {
-          if (item.id === 'b-hospedagem') {
-            return { ...item, estimated: hostelTotal, description: `${nights} Noites em Social Hostel (R$ ${tripConfig.hostelDailyRate || 80}/dia)` };
-          }
-          if (item.id === 'b-alimentacao') {
-            return { ...item, estimated: foodTotal, description: `Alimentação saudável para ${days} dias (~R$ 130/dia)` };
-          }
-          return item;
-        }));
-      };
-
-      const handleHostelRateChange = (newRate) => {
-        const rate = Number(newRate) || 80;
-        setTripConfig(prev => ({ ...prev, hostelDailyRate: rate }));
-        const nights = Math.max(1, tripConfig.days - 1);
-        const hostelTotal = rate * nights;
-
-        setBudget(prev => prev.map(item => {
-          if (item.id === 'b-hospedagem') {
-            return { ...item, estimated: hostelTotal, description: `${nights} Noites em Social Hostel (R$ ${rate}/dia)` };
-          }
-          return item;
-        }));
-      };
-
-      const nights = Math.max(1, (tripConfig.days || 7) - 1);
-      const totalActivities = itinerary.reduce((a, d) => a + d.activities.length, 0);
-      const completedActivities = itinerary.reduce((a, d) => a + d.activities.filter(x => x.completed).length, 0);
-      const totalChecklist = checklist.length;
-      const completedChecklist = checklist.filter(c => c.completed).length;
-
-      const filteredBudget = budget.filter(i => includeOptional || !i.isOptional);
-      const totalEstimated = filteredBudget.reduce((a, i) => a + i.estimated, 0);
-      const totalActual = filteredBudget.reduce((a, i) => a + (Number(i.actual) || 0), 0);
-      const remaining = totalEstimated - totalActual;
-
-      const toggleActivity = (dayId, actId) => {
-        setItinerary(prev => prev.map(d => {
-          if (d.id !== dayId) return d;
-          return {
-            ...d,
-            activities: d.activities.map(a => {
-              if (a.id !== actId) return a;
-              const next = !a.completed;
-              if (next && window.confetti) confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 } });
-              return { ...a, completed: next };
-            })
-          };
-        }));
-      };
-
-      const toggleChecklist = (id) => {
-        setChecklist(prev => prev.map(item => {
-          if (item.id !== id) return item;
-          const next = !item.completed;
-          if (next && window.confetti) confetti({ particleCount: 20, spread: 50 });
-          return { ...item, completed: next };
-        }));
-      };
-
-      const addChecklistItem = (e) => {
-        e.preventDefault();
-        if (!newCheckItem.trim()) return;
-        setChecklist(prev => [...prev, {
-          id: `custom-${Date.now()}`,
-          category: 'Segurança & Sobrevivência',
-          title: newCheckItem.trim(),
-          completed: false,
-          isCustom: true
-        }]);
-        setNewCheckItem('');
-      };
-
-      const updateBudgetActual = (id, val) => {
-        const num = val === '' ? 0 : parseFloat(val) || 0;
-        setBudget(prev => prev.map(item => item.id === id ? { ...item, actual: num } : item));
-      };
-
-      const resetAll = () => {
-        if (confirm('Restaurar os dados originais do Projeto Fênix?')) {
-          setTripConfig(DEFAULT_TRIP_CONFIG);
-          setItinerary(INITIAL_ITINERARY);
-          setBudget(INITIAL_BUDGET);
-          setChecklist(INITIAL_CHECKLIST);
-          setResources(INITIAL_RESOURCES);
-          localStorage.clear();
-          setActiveTab('booking');
-        }
-      };
+      const nights = Math.max(1, days - 1);
+      const totalAccommodation = nights * roomRate;
+      const totalFood = days * foodRate;
+      const grandTotal = totalAccommodation + totalFood + busCost + 350;
 
       return (
         <div className="min-h-screen flex flex-col">
           {/* Header */}
-          <header className="relative bg-gradient-to-b from-[#0f1d2e] to-[#0a0f18] border-b border-slate-800 pt-8 pb-8 px-4 sm:px-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold uppercase">
-                    🔥 Duração Flexível: {tripConfig.days} Dias / {nights} Noites (A Definir)
-                  </span>
-                  {(!tripConfig.busBooked || !tripConfig.hostelBooked) && (
-                    <button
-                      onClick={() => setActiveTab('booking')}
-                      className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold animate-pulse"
-                    >
-                      ⚠️ Pendente: Passagens & Hospedagem
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-400">
-                  <span>📍 Itapeva, SP ➡️ Rio de Janeiro, RJ</span>
-                  <button onClick={resetAll} className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700 text-xs">
-                    Resetar
-                  </button>
-                </div>
+          <header className="border-b border-stone-200/80 bg-white/70 backdrop-blur-md pt-8 pb-7 px-4 sm:px-8">
+            <div className="max-w-5xl mx-auto space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-stone-500">
+                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200/60 font-medium">
+                  🗓️ Janela: 19 a 28 de Setembro • Volta dia 28 em Itapeva
+                </span>
+                <span>📍 Origem: Itapeva, SP</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-2">
-                <span className="bg-gradient-to-r from-emerald-400 via-sky-400 to-amber-400 bg-clip-text text-transparent">
-                  Projeto Fênix
-                </span>{' '}
-                <span className="text-slate-400 font-light">|</span> O Resgate da Soberania no RJ
-              </h1>
-              <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed">
-                Independência, natureza, esporte e foco total. Saúde nas montanhas e praias cariocas, autoconfiança e <strong className="text-amber-400">zero álcool</strong>.
-              </p>
+              <div className="space-y-2">
+                <h1 className="text-3xl sm:text-5xl font-serif text-stone-900 tracking-tight">
+                  Refúgio & Novas Histórias
+                </h1>
+                <p className="text-sm sm:text-base text-stone-600 max-w-2xl font-light leading-relaxed">
+                  Um tempo só seu para desacelerar da rotina de tecnologia, pisar na areia, subir trilhas de visual épico, curtir uma noite leve e descansar em um <strong>quarto privativo com ar-condicionado e silêncio</strong>.
+                </p>
+              </div>
 
-              {/* Stats Bar */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-                <div 
-                  onClick={() => setActiveTab('booking')}
-                  className="bg-slate-900/80 border border-amber-500/40 rounded-xl p-3.5 cursor-pointer hover:border-amber-400 transition-all"
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-stone-100">
+                <button
+                  onClick={() => setActiveTab('compare')}
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                    activeTab === 'compare' ? 'bg-stone-900 text-white shadow-sm' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
                 >
-                  <span className="text-xs text-amber-300 font-semibold">Prioridade #1</span>
-                  <div className="text-sm font-bold text-white mt-1">
-                    Ônibus: {tripConfig.busBooked ? '✓ Fechado' : '⏳ Pendente'}
-                  </div>
-                  <span className="text-[11px] text-amber-400 font-medium">Hostel: {tripConfig.hostelBooked ? '✓ Fechado' : '⏳ Pendente'}</span>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Duração Planejada</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">{tripConfig.days} dias</div>
-                  <span className="text-[11px] text-emerald-400">{nights} noites de hostel</span>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Checklist Bagagem</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">{completedChecklist} / {totalChecklist}</div>
-                  <span className="text-[11px] text-sky-400">{Math.round((completedChecklist/totalChecklist)*100)||0}% pronto</span>
-                </div>
-                <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-xs text-slate-400">Orçamento Previsto</span>
-                  <div className="text-2xl font-extrabold text-white mt-1">R$ {totalEstimated}</div>
-                  <span className="text-[11px] text-slate-400">Gasto: R$ {totalActual}</span>
-                </div>
+                  🏖️ Floripa vs. Rio (Comparador)
+                </button>
+                <button
+                  onClick={() => setActiveTab('simulator')}
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                    activeTab === 'simulator' ? 'bg-stone-900 text-white shadow-sm' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
+                >
+                  🎛️ Dias & Orçamento Privativo
+                </button>
+                <button
+                  onClick={() => setActiveTab('notes')}
+                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                    activeTab === 'notes' ? 'bg-stone-900 text-white shadow-sm' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                  }`}
+                >
+                  📝 Esvaziar a Mente (Anotações)
+                </button>
               </div>
             </div>
           </header>
 
-          {/* Navigation Bar */}
-          <div className="max-w-7xl mx-auto px-4 w-full pt-6">
-            <div className="flex gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
-              <button
-                onClick={() => setActiveTab('booking')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'booking' ? 'bg-amber-600 text-white shadow' : 'text-amber-400 hover:text-white'
-                }`}
-              >
-                🏨 Passagens & Hostel
-              </button>
-              <button
-                onClick={() => setActiveTab('itinerary')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'itinerary' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                🗓️ Roteiro ({tripConfig.days}D)
-              </button>
-              <button
-                onClick={() => setActiveTab('budget')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'budget' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                💰 Orçamento
-              </button>
-              <button
-                onClick={() => setActiveTab('checklist')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'checklist' ? 'bg-sky-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                🎒 Checklist
-              </button>
-              <button
-                onClick={() => setActiveTab('resources')}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  activeTab === 'resources' ? 'bg-purple-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                🔗 Links
-              </button>
-            </div>
-          </div>
-
-          {/* Main Tab View */}
-          <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 flex-1 w-full space-y-6">
-            {/* 0. BOOKING HUB */}
-            {activeTab === 'booking' && (
+          {/* Content */}
+          <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8 flex-1 w-full space-y-6">
+            {/* COMPARATOR TAB */}
+            {activeTab === 'compare' && (
               <div className="space-y-6">
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-sky-500/10 border border-amber-500/40 space-y-3">
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs uppercase">
-                    Prioridade #1 da Viagem
-                  </span>
-                  <h2 className="text-2xl font-bold text-white">
-                    Definir Duração, Passagens & Hospedagem
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-300">
-                    Use o simulador abaixo para ajustar quantos dias você pretende ficar. O orçamento de hostel, alimentação e transporte será recalculado instantaneamente.
-                  </p>
-                </div>
-
-                {/* Simulator */}
-                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
-                  <h3 className="font-bold text-white text-base">🎛️ Simulador de Dias & Diárias</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex justify-between text-xs text-slate-300 font-semibold">
-                        <span>Duração:</span>
-                        <span className="text-emerald-400 font-bold">{tripConfig.days} Dias ({nights} Noites)</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="3"
-                        max="10"
-                        value={tripConfig.days}
-                        onChange={(e) => handleDaysChange(e.target.value)}
-                        className="w-full accent-emerald-500 cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[10px] text-slate-500">
-                        <span>3 dias</span>
-                        <span>5 dias</span>
-                        <span>7 dias</span>
-                        <span>10 dias</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                      <div className="flex justify-between text-xs text-slate-300 font-semibold">
-                        <span>Diária Estimada:</span>
-                        <span className="text-amber-400 font-bold">R$ {tripConfig.hostelDailyRate}/dia</span>
-                      </div>
-                      <input
-                        type="number"
-                        min="50"
-                        max="250"
-                        value={tripConfig.hostelDailyRate}
-                        onChange={(e) => handleHostelRateChange(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-sm text-white focus:outline-none"
-                      />
-                      <span className="text-[10px] text-slate-500">Média atual: R$ 75 a R$ 110</span>
-                    </div>
-
-                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
-                      <span className="text-xs text-slate-300 font-semibold">Custo Previsto do Hostel:</span>
-                      <div>
-                        <div className="text-2xl font-extrabold text-white">
-                          R$ {tripConfig.hostelDailyRate * nights}
-                        </div>
-                        <span className="text-xs text-emerald-400">{nights} noites × R$ {tripConfig.hostelDailyRate}</span>
-                      </div>
-                    </div>
+                <div className="bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-serif text-stone-900">
+                      Florianópolis ou Rio de Janeiro?
+                    </h2>
+                    <p className="text-xs sm:text-sm text-stone-600 mt-1">
+                      Ambos têm praia, trilhas épicas e vida noturna solo. Escolha a vibe que seu momento pede:
+                    </p>
                   </div>
-                </div>
-
-                {/* Bus Links */}
-                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-bold text-white">🚌 1. Passagens de Ônibus (SP ➡️ Novo Rio)</h3>
-                      <p className="text-xs text-slate-400">Dica: pegue ônibus noturno leito para economizar 1 diária de hostel!</p>
-                    </div>
+                  <div className="flex bg-stone-100 p-1 rounded-xl shrink-0">
                     <button
-                      onClick={() => setTripConfig(p => ({ ...p, busBooked: !p.busBooked }))}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
-                        tripConfig.busBooked ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
+                      onClick={() => setDestTab('floripa')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold ${
+                        destTab === 'floripa' ? 'bg-white text-emerald-800 shadow-sm' : 'text-stone-600'
                       }`}
                     >
-                      {tripConfig.busBooked ? '✓ Passagem Comprada' : 'Marcar como Comprada'}
+                      🌿 Florianópolis (SC)
                     </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <a href="https://www.clickbus.com.br/onibus/sao-paulo-sp/rio-de-janeiro-todos-rj" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
-                      <span className="text-xs font-bold text-sky-400">ClickBus ↗</span>
-                      <h4 className="font-bold text-white text-sm mt-1">Comparador Geral</h4>
-                      <p className="text-xs text-slate-400">Cometa, 1001, Águia Branca</p>
-                    </a>
-                    <a href="https://www.buser.com.br/onibus/sao-paulo-sp/rio-de-janeiro-rj" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
-                      <span className="text-xs font-bold text-emerald-400">Buser ↗</span>
-                      <h4 className="font-bold text-white text-sm mt-1">App de Ônibus</h4>
-                      <p className="text-xs text-slate-400">Até 40% mais barato</p>
-                    </a>
-                    <a href="https://www.autoviacao1001.com.br" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
-                      <span className="text-xs font-bold text-amber-400">Viação 1001 ↗</span>
-                      <h4 className="font-bold text-white text-sm mt-1">Linha Tradicional</h4>
-                      <p className="text-xs text-slate-400">Partidas a cada 30 min</p>
-                    </a>
-                    <a href="https://www.viacaocometa.com.br" target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-950 rounded-xl border border-slate-800 hover:border-sky-500 transition-colors">
-                      <span className="text-xs font-bold text-purple-400">Cometa ↗</span>
-                      <h4 className="font-bold text-white text-sm mt-1">Leito & Semi-leito</h4>
-                      <p className="text-xs text-slate-400">Conforto garantido</p>
-                    </a>
-                  </div>
-                </div>
-
-                {/* Hostels Guide */}
-                <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-lg font-bold text-white">🏨 2. Hospedagem: Ipanema vs. Botafogo</h3>
-                      <p className="text-xs text-slate-400">Ipanema: pé na areia e pôr do sol • Botafogo: metrô e polo gastronômico</p>
-                    </div>
                     <button
-                      onClick={() => setTripConfig(p => ({ ...p, hostelBooked: !p.hostelBooked }))}
-                      className={`px-3 py-1 rounded-xl text-xs font-semibold border ${
-                        tripConfig.hostelBooked ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-800 text-slate-300 border-slate-700'
+                      onClick={() => setDestTab('rio')}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold ${
+                        destTab === 'rio' ? 'bg-white text-amber-800 shadow-sm' : 'text-stone-600'
                       }`}
                     >
-                      {tripConfig.hostelBooked ? '✓ Hostel Reservado' : 'Marcar como Reservado'}
+                      🏖️ Rio de Janeiro (RJ)
                     </button>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex flex-col justify-between gap-3">
+                {/* FLORIPA DETAILS */}
+                {destTab === 'floripa' && (
+                  <div className="bg-white rounded-2xl border border-emerald-200/70 p-6 sm:p-8 shadow-sm space-y-5">
+                    <div className="border-b border-stone-100 pb-4 flex justify-between items-center">
                       <div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-bold">IPANEMA</span>
-                          <span className="text-xs font-bold text-amber-400">~R$ 95/dia</span>
-                        </div>
-                        <h4 className="font-bold text-white text-base mt-1">Ipanema Beach Hostel</h4>
-                        <p className="text-xs text-slate-400">A 1 quadra da praia, próximo ao Arpoador, muito social.</p>
+                        <h3 className="text-2xl sm:text-3xl font-serif text-stone-900">🌿 Florianópolis, SC</h3>
+                        <p className="text-xs sm:text-sm text-emerald-700 font-medium">Território virgem • Zero fantasmas do passado • Segurança alta</p>
                       </div>
-                      <div className="flex gap-2">
-                        <a href="https://www.booking.com/searchresults.pt-br.html?ss=Ipanema+Beach+Hostel+Rio+de+Janeiro" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-emerald-600/30 text-emerald-300 rounded text-xs">
-                          Booking ↗
-                        </a>
-                        <a href="https://www.hostelworld.com" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-orange-600/30 text-orange-300 rounded text-xs">
-                          Hostelworld ↗
-                        </a>
+                      <span className="text-xs font-mono text-stone-500">~8h a 9h de ônibus</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">📷 Trilhas & Fotos Épicas</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Pedra da Coroa (Lagoinha do Leste):</strong> foto monumental sobre a pedra com a praia selvagem abaixo.<br />
+                          <strong>Dunas da Joaquina & Trilha do Gravatá:</strong> visuais de tirar o fôlego.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🌙 Bares & Noite Solo</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Centrinho da Lagoa da Conceição:</strong> dezenas de barzinhos acolhedores onde ir sozinho é 100% natural e seguro.<br />
+                          <strong>Rio Tavares & Campeche:</strong> cervejarias artesanais descontraídas.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🏖️ Praias</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Praia do Campeche:</strong> mar aberto, água cristalina, clima esportivo.<br />
+                          <strong>Praia Mole:</strong> point jovem, quiosques e altinha.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🛏️ Quarto Privativo</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          Alugar um <strong>estúdio Airbnb ou pousada na Lagoa ou Campeche</strong>. Ar-condicionado, cama confortável e silêncio.
+                        </p>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 flex flex-col justify-between gap-3">
-                      <div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded font-bold">BOTAFOGO</span>
-                          <span className="text-xs font-bold text-amber-400">~R$ 85/dia</span>
-                        </div>
-                        <h4 className="font-bold text-white text-base mt-1">Villa 25 Hostel & Suites</h4>
-                        <p className="text-xs text-slate-400">Perto do metrô, bairro seguro, polo BotaSoho com PFs baratos.</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <a href="https://www.booking.com/searchresults.pt-br.html?ss=Villa+25+Hostel+Rio+de+Janeiro" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-emerald-600/30 text-emerald-300 rounded text-xs">
-                          Booking ↗
-                        </a>
-                        <a href="https://www.hostelworld.com" target="_blank" rel="noopener noreferrer" className="flex-1 py-1 text-center bg-orange-600/30 text-orange-300 rounded text-xs">
-                          Hostelworld ↗
-                        </a>
-                      </div>
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <a href="https://www.clickbus.com.br/onibus/curitiba-pr/florianopolis-todos-sc" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold">
+                        Ver Ônibus para Floripa ↗
+                      </a>
+                      <a href="https://www.airbnb.com.br/s/Lagoa-da-Concei%C3%A7%C3%A3o--Florian%C3%B3polis---SC/homes?room_types%5B%5D=Entire%20home%2Fapt" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold">
+                        Airbnbs Privativos na Lagoa ↗
+                      </a>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* RIO DETAILS */}
+                {destTab === 'rio' && (
+                  <div className="bg-white rounded-2xl border border-amber-200/70 p-6 sm:p-8 shadow-sm space-y-5">
+                    <div className="border-b border-stone-100 pb-4 flex justify-between items-center">
+                      <div>
+                        <h3 className="text-2xl sm:text-3xl font-serif text-stone-900">🏖️ Rio de Janeiro, RJ</h3>
+                        <p className="text-xs sm:text-sm text-amber-800 font-medium">O resgate da soberania • Nova narrativa • Energia carioca</p>
+                      </div>
+                      <span className="text-xs font-mono text-stone-500">~10h de ônibus</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">📷 Trilhas & Fotos Épicas</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Morro Dois Irmãos:</strong> visual definitivo de Ipanema e Leblon.<br />
+                          <strong>Voo Livre de Asa Delta:</strong> salto da Pedra Bonita para a praia.<br />
+                          <strong>Pôr do Sol no Arpoador:</strong> energia solar pura.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🌙 Bares & Noite Solo</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Baixo Botafogo (BotaSoho):</strong> rua Nelson Mandela cheia de mesas na calçada.<br />
+                          <strong>Leblon & Ipanema:</strong> sucos e botecos clássicos pós-praia.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🏖️ Praias</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          <strong>Praia de Ipanema (Posto 9):</strong> ver gente, altinha e água de coco.<br />
+                          <strong>Copacabana Posto 6:</strong> mar calmo e caminhada na orla.
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                        <span className="font-semibold text-stone-900 block">🛏️ Quarto Privativo</span>
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          Alugar um <strong>estúdio/flat em Botafogo</strong> (metrô na porta, seguro) ou em <strong>Copacabana/Ipanema</strong> a poucas quadras da praia.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <a href="https://www.clickbus.com.br/onibus/sao-paulo-sp/rio-de-janeiro-todos-rj" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-semibold">
+                        Ver Ônibus para Rio ↗
+                      </a>
+                      <a href="https://www.airbnb.com.br/s/Botafogo--Rio-de-Janeiro---RJ/homes?room_types%5B%5D=Entire%20home%2Fapt" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-semibold">
+                        Airbnbs Privativos em Botafogo ↗
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* 1. ITINERARY */}
-            {activeTab === 'itinerary' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center bg-slate-900/70 p-4 rounded-xl border border-slate-800">
-                  <span className="text-sm font-bold text-white">Roteiro Ajustável ({tripConfig.days} Dias Ativos)</span>
-                  <button
-                    onClick={() => setActiveTab('booking')}
-                    className="text-xs text-emerald-400 hover:underline font-semibold"
-                  >
-                    Alterar número de dias no simulador ↗
-                  </button>
-                </div>
-                {itinerary.map((day) => {
-                  const done = day.activities.filter(a => a.completed).length;
-                  const total = day.activities.length;
-                  const isAll = done === total;
-                  const isBeyond = day.dayNumber > tripConfig.days;
-
-                  return (
-                    <div
-                      key={day.id}
-                      className={`rounded-2xl border transition-all ${
-                        isBeyond
-                          ? 'bg-slate-900/30 border-slate-800/50 opacity-60'
-                          : isAll
-                          ? 'bg-emerald-950/20 border-emerald-500/40'
-                          : 'bg-slate-900/70 border-slate-800'
-                      }`}
-                    >
-                      <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/60">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-bold ${
-                            isAll ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-200'
-                          }`}>
-                            <span className="text-[9px] uppercase leading-none">Dia</span>
-                            <span className="text-base leading-none font-extrabold">{day.dayNumber}</span>
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h2 className="text-base sm:text-lg font-bold text-white">
-                                {day.dayOfWeek} ({day.date}) • <span className="text-emerald-400">{day.title}</span>
-                              </h2>
-                              {isBeyond && (
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-amber-400 border border-amber-500/20">
-                                  Dia Extra
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-400 italic">"{day.quote}"</p>
-                          </div>
-                        </div>
-
-                        <span className="text-xs font-mono text-slate-400">{done}/{total} feitos</span>
-                      </div>
-
-                      <div className="p-4 sm:p-5 space-y-3">
-                        {day.activities.map(act => (
-                          <div
-                            key={act.id}
-                            onClick={() => toggleActivity(day.id, act.id)}
-                            className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
-                              act.completed
-                                ? 'bg-emerald-950/30 border-emerald-500/40 opacity-75'
-                                : act.highlight
-                                ? 'bg-slate-900 border-amber-500/40 shadow'
-                                : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={act.completed}
-                              onChange={() => {}}
-                              className="mt-1 w-4 h-4 text-emerald-500 rounded bg-slate-950 border-slate-700 focus:ring-0 cursor-pointer"
-                            />
-                            <div className="flex-1 space-y-1">
-                              <div className="flex justify-between text-xs">
-                                <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded uppercase">{act.period}</span>
-                                <span className="text-sky-400">📍 {act.location}</span>
-                              </div>
-                              <h3 className={`text-sm sm:text-base font-semibold ${act.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
-                                {act.title}
-                              </h3>
-                              <p className={`text-xs ${act.completed ? 'text-slate-500' : 'text-slate-300'}`}>{act.description}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 2. BUDGET */}
-            {activeTab === 'budget' && (
-              <div className="space-y-6">
-                <div className="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold text-white">💰 Orçamento ({tripConfig.days} Dias)</h2>
-                      <p className="text-xs text-slate-400 mt-0.5">Hospedagem ({nights} noites) e alimentação recalculadas para sua duração.</p>
-                    </div>
-                    <button
-                      onClick={() => setIncludeOptional(!includeOptional)}
-                      className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-300 hover:text-white"
-                    >
-                      {includeOptional ? 'Modo Essencial (Sem Asa Delta/Guia)' : 'Modo Completo (com Voo/Guia)'}
-                    </button>
+            {/* SIMULATOR TAB */}
+            {activeTab === 'simulator' && (
+              <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-8 shadow-sm space-y-6">
+                <div className="border-b border-stone-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-2xl font-serif text-stone-900">Simulador de Duração & Quarto Privativo</h3>
+                    <p className="text-xs text-stone-500 mt-0.5">Testando opções entre 19/09 e 28/09.</p>
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
-                      <span className="text-xs text-slate-400">Total Previsto</span>
-                      <div className="text-2xl font-bold text-white mt-1">R$ {totalEstimated}</div>
-                    </div>
-                    <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
-                      <span className="text-xs text-slate-400">Gasto Real Atual</span>
-                      <div className={`text-2xl font-bold mt-1 ${totalActual > totalEstimated ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        R$ {totalActual}
-                      </div>
-                    </div>
-                    <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800">
-                      <span className="text-xs text-slate-400">Saldo Disponível</span>
-                      <div className={`text-2xl font-bold mt-1 ${remaining < 0 ? 'text-rose-400' : 'text-sky-400'}`}>
-                        R$ {remaining}
-                      </div>
-                    </div>
+                  <div className="text-right">
+                    <span className="text-xs text-stone-500 uppercase">Estimativa Total</span>
+                    <div className="text-2xl font-serif font-bold text-stone-900">R$ {grandTotal}</div>
                   </div>
                 </div>
-
-                <div className="bg-slate-900/70 rounded-2xl border border-slate-800 divide-y divide-slate-800 overflow-hidden">
-                  {filteredBudget.map(item => (
-                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/30">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{item.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-white text-sm">{item.category}</span>
-                            {item.isOptional && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                Opcional
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-400">{item.description}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <span className="text-[10px] uppercase text-slate-400 block">Previsto</span>
-                          <span className="text-sm font-bold text-slate-300">R$ {item.estimated}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] uppercase text-slate-400 block">Gasto Real</span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-slate-400">R$</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={item.actual === 0 ? '' : item.actual}
-                              placeholder="0"
-                              onChange={(e) => updateBudgetActual(item.id, e.target.value)}
-                              className="w-20 px-2 py-1 bg-slate-950 border border-slate-700 rounded text-right text-sm text-white focus:outline-none focus:border-emerald-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* 3. CHECKLIST */}
-            {activeTab === 'checklist' && (
-              <div className="space-y-6">
-                <div className="bg-slate-900/70 p-5 rounded-2xl border border-slate-800 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h2 className="text-xl font-bold text-white">🎒 Checklist de Sobrevivência Carioca</h2>
-                      <p className="text-xs text-slate-400">Equipamentos, segurança e preparativos indispensáveis.</p>
-                    </div>
-                    <span className="text-sm font-mono text-emerald-400 font-bold">
-                      {completedChecklist}/{totalChecklist} ({Math.round((completedChecklist/totalChecklist)*100)||0}%)
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-sky-500 h-full transition-all duration-500"
-                      style={{ width: `${(completedChecklist/totalChecklist)*100}%` }}
-                    />
-                  </div>
-                </div>
-
-                <form onSubmit={addChecklistItem} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newCheckItem}
-                    onChange={(e) => setNewCheckItem(e.target.value)}
-                    placeholder="Adicionar novo item ao checklist..."
-                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-sky-500"
-                  />
-                  <button type="submit" className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl">
-                    + Adicionar
-                  </button>
-                </form>
 
                 <div className="space-y-2">
-                  {checklist.map(item => (
-                    <div
-                      key={item.id}
-                      onClick={() => toggleChecklist(item.id)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
-                        item.completed ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-400' : 'bg-slate-900/60 border-slate-800 text-slate-200'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={item.completed}
-                        onChange={() => {}}
-                        className="w-4 h-4 text-emerald-500 rounded bg-slate-950 border-slate-700 cursor-pointer"
-                      />
-                      <div>
-                        <span className="text-[10px] uppercase text-sky-400 block font-semibold">{item.category}</span>
-                        <span className={`text-sm ${item.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
-                          {item.title}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex justify-between text-sm">
+                    <span className="font-semibold text-stone-800">Duração Escolhida:</span>
+                    <span className="font-bold text-amber-900 bg-amber-50 px-3 py-0.5 rounded-full border border-amber-200">
+                      {days} Dias ({nights} Noites de Hospedagem)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="4"
+                    max="9"
+                    value={days}
+                    onChange={(e) => setDays(Number(e.target.value))}
+                    className="w-full accent-stone-800 cursor-pointer h-2 bg-stone-100 rounded-lg"
+                  />
+                  <div className="flex justify-between text-xs text-stone-400">
+                    <span>4 dias</span>
+                    <span>6 dias</span>
+                    <span>9 dias</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                    <span className="text-xs font-semibold text-stone-700 block">Diária Quarto Privativo (R$)</span>
+                    <input
+                      type="number"
+                      value={roomRate}
+                      onChange={(e) => setRoomRate(Number(e.target.value)||0)}
+                      className="w-full bg-white border border-stone-300 rounded px-2 py-1 text-sm font-mono"
+                    />
+                    <span className="text-[11px] text-stone-500 block">Subtotal: R$ {nights * roomRate} ({nights} noites)</span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                    <span className="text-xs font-semibold text-stone-700 block">Alimentação / Dia (R$)</span>
+                    <input
+                      type="number"
+                      value={foodRate}
+                      onChange={(e) => setFoodRate(Number(e.target.value)||0)}
+                      className="w-full bg-white border border-stone-300 rounded px-2 py-1 text-sm font-mono"
+                    />
+                    <span className="text-[11px] text-stone-500 block">Subtotal: R$ {days * foodRate} ({days} dias)</span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                    <span className="text-xs font-semibold text-stone-700 block">Ônibus Ida + Volta (R$)</span>
+                    <input
+                      type="number"
+                      value={busCost}
+                      onChange={(e) => setBusCost(Number(e.target.value)||0)}
+                      className="w-full bg-white border border-stone-300 rounded px-2 py-1 text-sm font-mono"
+                    />
+                    <span className="text-[11px] text-stone-500 block">Leito confortável</span>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 4. RESOURCES */}
-            {activeTab === 'resources' && (
-              <div className="space-y-6">
-                <div className="bg-slate-900/70 p-5 rounded-2xl border border-slate-800">
-                  <h2 className="text-xl font-bold text-white">🔗 Central de Links & Reservas</h2>
-                  <p className="text-xs text-slate-400 mt-0.5">Vouchers, bilhetes e contatos úteis no bolso.</p>
+            {/* NOTES TAB */}
+            {activeTab === 'notes' && (
+              <div className="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-8 shadow-sm space-y-4">
+                <div className="border-b border-stone-100 pb-3 flex justify-between items-center">
+                  <h3 className="text-2xl font-serif text-stone-900">Caderno Livre: Esvaziar a Mente</h3>
+                  <span className="text-xs text-stone-400">✓ Salva automaticamente</span>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {resources.map(res => (
-                    <div key={res.id} className="bg-slate-900/70 p-4 rounded-2xl border border-slate-800 flex flex-col justify-between gap-3">
-                      <div>
-                        <span className="text-xl">{res.icon}</span>
-                        <h3 className="font-bold text-white text-base mt-1">{res.title}</h3>
-                        <p className="text-xs text-slate-400">{res.description}</p>
-                      </div>
-                      <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                        <span className="text-xs font-mono text-slate-400 truncate max-w-[200px]">{res.url}</span>
-                        <a
-                          href={res.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-medium"
-                        >
-                          Acessar ↗
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xs text-stone-500">Escreva tudo o que vier à mente: ideias, dúvidas, lugares que quer ver ou evitar.</p>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={10}
+                  className="w-full bg-[#faf9f6] border border-stone-200 rounded-xl p-4 text-sm text-stone-800 focus:outline-none focus:border-stone-400"
+                />
               </div>
             )}
           </main>
 
-          <footer className="border-t border-slate-800 bg-[#070b12] py-4 text-center text-xs text-slate-500">
-            🦅 Projeto Fênix • Duração Flexível • Itapeva ➡️ Rio de Janeiro
+          <footer className="border-t border-stone-200 bg-white py-6 text-center text-xs text-stone-400 font-light">
+            Caderno de Viagem • Escolha com calma e no seu ritmo • Setembro de 2026
           </footer>
         </div>
       );
